@@ -22,12 +22,16 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	var posts = models.GetPosts()
 
 	sqlStmt := `SELECT * FROM posts`
+	
+	// Queryx() là phương thức được sử dụng để thực hiện một câu truy vấn SQL có thể trả về nhiều hàng kết quả từ cơ sở dữ liệu.
 	rows, err := dbconn.Queryx(sqlStmt)
 
 	if err == nil {
 		var tempPost = models.GetPost()
 
+		// Mỗi hàng có thể được truy cập thông qua phương thức Next() của *sql.Rows,
 		for rows.Next() {
+			// // Quét từng hàng kết quả và sử dụng StructScan để ánh xạ dữ liệu vào cấu trúc Post
 			err = rows.StructScan(&tempPost)
 			posts = append(posts, tempPost)
 		}
@@ -39,6 +43,7 @@ func GetAllPosts(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), 204)
 			}
 		case nil:
+			// mã hóa một đối tượng dữ liệu thành chuỗi JSON và ghi nó vào một luồng ghi cụ thể.
 			json.NewEncoder(w).Encode(&posts)
 		default:
 			http.Error(w, err.Error(), 400)
@@ -54,11 +59,15 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
+
+	// Get id params từ url
 	id, _ := strconv.Atoi(params["id"])
 
 	var searchpost = models.GetPost()
 
 	sqlStmt := `SELECT * FROM posts WHERE id=$1`
+	
+	// QueryRowx() là phương thức được sử dụng khi bạn mong đợi một hàng kết quả duy nhất từ cơ sở dữ liệu.
 	row := dbconn.QueryRowx(sqlStmt, id)
 	switch err := row.StructScan(&searchpost); err {
 	case sql.ErrNoRows:
